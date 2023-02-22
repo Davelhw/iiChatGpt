@@ -25,7 +25,7 @@ namespace ChatGptApp.Server.Controllers
         public async Task<ActionResult<ServiceResponse<string>>> GetResult([FromBody] ChatGptRequest request)
         {
             //your OpenAI API key
-            string apiKey = "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";
+            string apiKey = "sk-xRpgYpHJKCTGFGFPudC6T3Blxxxxxxxxxxxxxxxxxxxxxxxx";
             string answer = string.Empty;
             ServiceResponse<string> response = new();
             var openAi = new OpenAIAPI(apiKey);
