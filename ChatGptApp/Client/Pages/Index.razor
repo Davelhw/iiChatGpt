@@ -1,0 +1,91 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.WebUtilities
+@using ChatGptApp.Shared
+@inject IChatGptService _chatGptService
+
+<PageTitle>Index</PageTitle>
+
+<h1 class="mb-4">Ask ChatGPT!</h1>
+
+<EditForm Model="request" OnValidSubmit="HandleQuestion">
+    <div class="col-sm-12 col-lg-12 mt-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Post your question here below</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="question">Your question (in any language)</label>
+                    <InputText id="question" @bind-Value="request.Question" class="form-control mt-2" />
+                </div>
+
+                <div class="mt-4 mb-4">
+                    <div class="card-text">
+                        <textarea class="w-100" rows="@_rows" readonly>
+                            @_chatGptAnswer
+                        </textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100" disabled="@_busy">
+                        @_buttonLabel
+                </button>
+
+
+            </div>
+            <div class="card-footer">
+                <p class="card-text"><small class="text-muted">@_lastUpdateMsg</small></p>
+                <p class="card-text"><small class="text-muted fst-italic">@_lastResponeTime</small></p>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code{
+    private string _lastUpdateMsg = "";
+    private string _lastResponeTime = "";
+    private int _rows = 5;
+
+    public string _chatGptAnswer { get; set; } = string.Empty;
+    private string errorMessage = string.Empty;
+    private ChatGptRequest request = new();
+    private bool _busy = false;
+    private string _buttonLabel = "Ask ChatGPT";
+    private string _submitButton = "Ask ChatGPT";
+    private string _submitButtonBusy = "Asking ChatGPT, please wait...";
+
+    private async Task HandleQuestion()
+    {
+        _busy = true;
+        _buttonLabel = _submitButtonBusy;
+        DateTime _startDt = DateTime.Now;
+
+        var result = await _chatGptService.AskGPT(request);
+
+        DateTime _endDt = DateTime.Now;
+        if (result.Success)
+        {
+            errorMessage = string.Empty;
+            StringBuilder sb = new StringBuilder(result.Data);
+            
+            _chatGptAnswer = HttpUtility.HtmlDecode(sb.ToString().Trim());
+
+            _rows = sb.ToString().Split(System.Environment.NewLine.ToCharArray()).Length + 1;
+        }
+        else
+        {
+            errorMessage = result.Message;
+            _chatGptAnswer = result.Data;
+        }
+
+        var diffInSeconds = (_startDt - _endDt).TotalSeconds;
+        _lastResponeTime = $"ChatGPT response time {diffInSeconds} seconds";
+        _lastUpdateMsg = $"Last question posted on {_endDt.ToLocalTime()}";
+
+
+
+        _buttonLabel = _submitButton;
+        _busy = false;
+
+    }
+}
